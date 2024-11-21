@@ -1,0 +1,41 @@
+pipeline {
+   agent any
+   stages {
+    stage('Checkout') {
+        steps {
+            checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/ubc/flask-sample-app.git']]])
+            sh "ls -lart ./*"
+        }
+    }
+    stage('Build') {
+        steps {
+            sh "echo 'For Python apps you dont need to build something'"
+            sh "pip3 install -r requirements.txt --break-system-packages"
+        }
+    }
+    stage('Testing') {
+        steps {
+            sh "nohup python3 run.py >/dev/null 2>&1 &";
+            sh "python3 -m unittest discover tests";
+            
+        }
+    }
+    stage('Kill process') {
+        steps {
+            sh '''
+                kill \$(ps aux | grep '[p]ython3 run.py' | awk '{print \$2}')
+            '''
+        }
+    }
+    stage('Package app') {
+        steps {
+            sh 'echo "Tar folders"'
+        }
+    }
+    stage('Deploy') {
+        steps {
+            sh 'echo "Deploying app to the staging"'
+        }
+    }
+  }
+}
